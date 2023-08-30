@@ -1,0 +1,4 @@
+pysam
+pyyaml
+scipy
+seaborn

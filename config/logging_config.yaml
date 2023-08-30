@@ -1,0 +1,47 @@
+---
+version: 1
+disable_existing_loggers: False
+formatters:
+  simple:
+    format: "%(asctime)s %(name)s [%(levelname)-5.5s]  %(message)s"
+  pure:
+    format: "%(message)s"
+  #colored_console: {'()': 'coloredlogs.ColoredFormatter', 'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s", 'datefmt': '%Y %b %d %H:%M:%S'}
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+
+  info_file_handler:
+    class: logging.FileHandler
+    level: INFO
+    formatter: simple
+    filename: info.log
+    encoding: utf8
+    mode: 'w'
+
+  debug_file_handler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: simple
+    filename: debug.log
+    encoding: utf8
+    mode: 'w'
+
+  error_file_handler:
+    class: logging.FileHandler
+    level: ERROR
+    formatter: simple
+    filename: error.log
+    encoding: utf8
+    mode: 'w'
+
+loggers:
+
+  runner:
+    level: DEBUG
+    handlers: [ console, info_file_handler, debug_file_handler, error_file_handler ]
+
