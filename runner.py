@@ -2,7 +2,7 @@
 import os
 import pysam
 
-from functions import get_coverages
+from functions import get_coverages, GenomeExplorer
 from utils.general import setup_logging, load_config
 
 config = load_config(os.path.join('config', "config.yaml"))
@@ -17,9 +17,9 @@ logger.info("Opening bam file")
 samfile = pysam.AlignmentFile(os.path.join(config["bam_file"]), "rb")
 
 logger.info("Calculating coverage across the genome")
-base_order = config["coverage"]["base_order"]
-total_coverage_dict, total_coverage, total_length = get_coverages(samfile,
-                                                                  base_order)
+
+ge = GenomeExplorer(config)
+total_coverage_dict, total_coverage, total_length = ge.get_coverages(samfile)
 
 average_coverage = total_coverage / total_length
 # for read in samfile:
