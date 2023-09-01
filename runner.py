@@ -1,8 +1,10 @@
 # Runner for GENE PLANET HOMEWORK
 import os
 import pysam
+import matplotlib.pyplot as plt
+import numpy as np
 
-from functions import get_coverages, GenomeExplorer
+from functions import GenomeExplorer
 from utils.general import setup_logging, load_config
 
 config = load_config(os.path.join('config', "config.yaml"))
@@ -16,18 +18,11 @@ logger = setup_logging(os.path.join('config', 'logging_config.yaml'),
 logger.info("Opening bam file")
 samfile = pysam.AlignmentFile(os.path.join(config["bam_file"]), "rb")
 
-logger.info("Calculating coverage across the genome")
-
 ge = GenomeExplorer(config)
-total_coverage_dict, total_coverage, total_length = ge.get_coverages(samfile)
 
-average_coverage = total_coverage / total_length
-# for read in samfile:
-#     print(read.query_name, read.reference_name, read.cigarstring)
-#
-#
-# for read in samfile.fetch('1', 10000, 10010):
-#     print(read)
+# (total_read_count, total_length, chromosome_read_counts,
+#  gc_percentage) = ge.get_statistics(samfile)
 
+coverage_dict = ge.get_average_coverage(samfile)
 logger.info("Closing bam file")
 samfile.close()

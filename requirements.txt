@@ -2,3 +2,6 @@ pysam
 pyyaml
 scipy
 seaborn
+numpy
+matplotlib
+
