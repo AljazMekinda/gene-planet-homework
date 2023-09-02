@@ -3,6 +3,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pysam
+# from pyspark.sql import SparkSession
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, \
+    Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 
 
 class GenomeExplorer:
@@ -13,103 +20,7 @@ class GenomeExplorer:
 
         self.logger = logging.getLogger("genome_explorer")
         self.config = config
-        self.base_order = config["coverage"]["base_order"]
-
-    # def coverages_by_bases(self, samfile, contig):
-    #     """
-    #     Calculate average coverage for each contig in samfile
-    #     and each base ACGT in this contig
-    #     :param samfile:
-    #     :return: {contig: {A: sum_coverage, C: sum_coverage, G:
-    #                             sum_coverage, T: sum_coverage}
-    #                             ...}
-    #     """
-    #     total_coverage = 0
-    #     total_length = 0
-    #
-    #     coverage_dict = {}
-    #
-    #     self.logger.info(f"Calculating coverage for contig {contig}")
-    #     coverage_dict[contig] = dict()
-    #     reference_start = samfile.get_reference_start(contig)
-    #     reference_end = samfile.get_reference_end(contig)
-    #     length = samfile.get_reference_length(contig)
-    #     total_length += length
-    #     # coverage for the bases A, C, G, T (in this order)
-    #     coverage = samfile.count_coverage(contig, start=reference_start,
-    #                                       stop=reference_end)
-    #
-    #     base_sums = map(sum, coverage)
-    #
-    #     for i, value in enumerate(base_sums):
-    #         self.logger.info(f"Coverage for base {self.base_order[i]}: "
-    #                          f"{value}")
-    #         coverage_dict[contig][self.base_order[i]] = value
-    #
-    #     total_coverage += sum(base_sums)
-    #
-    #     return coverage_dict, total_coverage, total_length
-    #
-    # def coverage_contig(self, samfile, contig, genome_length,
-    #                     chunk_size=1000000):
-    #     """
-    #     Calculate average coverage for a selected contig in samfile.
-    #     average coverage in a region is calculated as:
-    #     n_mapped_reads * average_length_of_reads_in_region/total_length_of_region
-    #
-    #     :param samfile: samfile to calculate average coverage
-    #     :param contig: contig to calculate average coverage
-    #     :param genome_length: total length of the genome
-    #     :param chunk_size: size of a region to calculate average coverage
-    #     :return:
-    #     """
-    #     self.logger.info(f"Calculating average coverage for contig {contig}")
-    #     # list of n_reads * average_length_of_reads_in a region (chunk)
-    #     coverage_sums = []
-    #     # global position
-    #     pos_index = list()
-    #     for i in range(0, genome_length, chunk_size):
-    #         print(i)
-    #         try:
-    #             # try if contig is present in the region [i:i+chunk_size]
-    #             contig_region = samfile.fetch(contig, i, i + chunk_size)
-    #         except ValueError:
-    #             pos_index.append(i)
-    #             coverage_sums.append(0)
-    #             continue
-    #
-    #         # nmb of reads in that chunk
-    #         n_reads = 0
-    #         lengths = np.array([])
-    #         for read in contig_region:
-    #             if read.is_unmapped:
-    #                 continue
-    #             else:
-    #                 n_reads += 1
-    #                 lengths = np.append(lengths, read.query_alignment_length)
-    #         if n_reads > 0:
-    #             coverage_sums.append(
-    #                 n_reads * np.mean(lengths) / genome_length)
-    #             pos_index.append(i)
-    #     return coverage_sums, pos_index
-    #
-    # def calculate_coverages(self, samfile, total_length, chunk_size=1000000):
-    #     """
-    #     Visualize coverage for each contig in samfile
-    #     :param samfile:
-    #     :return:
-    #     """
-    #     contigs = samfile.header.references
-    #
-    #     coverage_dict = {}
-    #     for contig in contigs:
-    #         self.logger.info(f"Calculating coverage for contig {contig}")
-    #         coverage_sums, pos_index = self.coverage_contig(samfile, contig,
-    #                                                         total_length,
-    #                                                         chunk_size=1000000)
-    #         coverage_dict[contig] = (coverage_sums, pos_index)
-    #     self.logger.info(f"Coverage for all contigs calculated")
-    #     return coverage_dict
+        self.report_path = config["report_path"]
 
     def get_statistics(self, samfile):
         """
@@ -118,6 +29,7 @@ class GenomeExplorer:
         :return:
         """
         # Count the number of reads for each chromosome.
+        statistics = dict()
         chromosome_read_counts = {}
         chromosome_lengths = {}
         gc_bases = 0
@@ -151,46 +63,144 @@ class GenomeExplorer:
         total_read_count = sum(chromosome_read_counts.values())
         # Calculate the total length of the genome
         total_length = sum(chromosome_lengths.values())
+        statistics["total_read_count"] = total_read_count
+        statistics["total_length"] = total_length
+        statistics["gc_percentage"] = gc_percentage
+        chromosome_read_counts_1 = {f"total_read_count - {key}": value for
+                                    key, value in
+                                    chromosome_read_counts.items()}
+        statistics.update(chromosome_read_counts_1)
         self.logger.info(f"Total number of reads: {total_read_count}")
         self.logger.info(f"Total length of the genome: {total_length}")
-        return (total_read_count, total_length, chromosome_read_counts,
-                gc_percentage)
+        return statistics
 
-    def get_average_coverage(self, samfile, visualize=True):
+    def mean_coverage(self, samfile, contig=None):
+        """
+        Calculate the mean coverage for a given contig
+        :param samfile:
+        :param contig:
+        :return:
+        """
+        self.logger.info(f"Calculating coverage for contig {contig}")
+        # length = samfile.get_reference_length(contig)
+        # coverage = samfile.count_coverage(contig, start=0, stop=length)
+        # base_sums = map(sum, coverage)
+        # total_coverage = sum(base_sums)
+        # average_coverage = total_coverage / length
+        coverage_values = []
+        for pileupcolumn in samfile.pileup(contig):
+            coverage_values.append(pileupcolumn.n)
+
+        average_coverage = sum(coverage_values) / len(coverage_values)
+
+        return contig, average_coverage
+
+    def get_average_coverage(self, samfile):
         self.logger.info("Calculating average coverage for each chromosome")
         chromosomes = []
-        coverage_values = []
+        av_coverage_values = []
 
         # Iterate through the references (chromosomes)
         for contig in samfile.references:
             # Check if the chromosome is one of the autosomes (1-22), X, or Y
             if contig.isdigit() and 1 <= int(contig) <= 22 or contig in ["X",
                                                                          "Y"]:
-                self.logger.info(f"Calculating coverage for contig {contig}")
-                length = samfile.get_reference_length(contig)
-                coverage = samfile.count_coverage(contig, start=0, stop=length)
-                base_sums = map(sum, coverage)
-                total_coverage = sum(base_sums)
-                average_coverage = total_coverage / length
+                contig, contig_mean_coverage = self.mean_coverage(samfile,
+                                                                  contig)
 
                 chromosomes.append(contig)
-                coverage_values.append(average_coverage)
-        if visualize:
-            self.logger.info("Visualizing average coverage")
-            self.visualize_coverage(chromosomes, coverage_values)
-        coverage_dict = dict(zip(chromosomes, coverage_values))
+                av_coverage_values.append(contig_mean_coverage)
+
+        coverage_dict = dict(zip(chromosomes, av_coverage_values))
         return coverage_dict
 
-    def visualize_coverage(self, chromosomes, coverage_values):
-        # Create a line plot
+    # def get_average_coverage_spark(self, samfile):
+    #     self.logger.info("Calculating average coverage for each chromosome")
+    #
+    #     contigs = samfile.references
+    #     # Initialize Spark
+    #     spark = SparkSession.builder.appName(
+    #         "CoverageCalculation").getOrCreate()
+    #     # Iterate through the references (chromosomes)
+    #     results = spark.sparkContext.parallelize(contigs).map(
+    #         lambda contig: self.mean_coverage(samfile, contig)).collect()
+    #
+    #     spark.stop()
+    #
+    #     chromosomes = []
+    #     coverage_values = []
+    #
+    #     for contig, average_coverage in results:
+    #         chromosomes.append(contig)
+    #         coverage_values.append(average_coverage)
+    #     coverage_dict = dict(zip(chromosomes, coverage_values))
+    #     return coverage_dict
+
+    def generate_pdf_report(self, statistics, coverage_dict):
+        # Create a PDF document
+        self.logger.info("Generating PDF report")
+        # Create a PDF document
+        doc = SimpleDocTemplate(self.report_path, pagesize=landscape(letter))
+
+        # Create a story (content) for the PDF
+        story = []
+        # Add a title
+        title_style = getSampleStyleSheet()['Title']
+        title = Paragraph("Gene Planet Data Scientist Job Assignment",
+                          title_style)
+        story.append(title)
+
+        # Add text content
+        text_content = """
+        This is an auto generated report created by GenomeExplorer. It contains
+        statistics about the bam file and a graph showing the average coverage
+        across the genome for selected chromosomes. 
+        """
+
+        text_style = getSampleStyleSheet()['Normal']
+        text = Paragraph(text_content, text_style)
+        story.append(text)
+
+        # Add a spacer
+        story.append(Spacer(1, 12))
+
+        for statistic, value in statistics.items():
+            text_content = f"{statistic}: {value}"
+            text = Paragraph(text_content, text_style)
+            story.append(text)
+
+        # Add a spacer
+        story.append(Spacer(1, 12))
+
+        # Create the graph
+        chromosomes = list(coverage_dict.keys())
+        av_coverage_values = list(coverage_dict.values())
         plt.figure(figsize=(10, 6))
-        plt.plot(chromosomes, coverage_values, marker='o', linestyle='-')
-        plt.title("Average Coverage Across Selected Chromosomes")
+        plt.plot(chromosomes, av_coverage_values, marker='o', linestyle='-')
+        plt.title(
+            "Average Coverage Across The Genome For Selected Chromosomes")
         plt.xlabel("Chromosome")
         plt.ylabel("Average Coverage")
         plt.xticks(rotation=45)
         plt.grid(True)
-
-        # Show the plot or save it to a file
         plt.tight_layout()
-        plt.show()
+
+        # Save the graph to a BytesIO buffer
+        buf = BytesIO()
+        plt.savefig(buf, format='png',
+                    bbox_inches='tight')  # Use 'bbox_inches' to avoid cutting off labels
+        buf.seek(0)
+
+        # Create an Image object from the graph and adjust the width and height
+        graph = Image(buf, width=doc.width, height=doc.height / 2)
+
+        # Add the graph to the PDF
+        story.append(Spacer(1, 12))
+        story.append(
+            Paragraph("Average coverage across the genome by chromosome",
+                      text_style))
+        story.append(Spacer(1, 6))
+        story.append(graph)  # Add the graph as an Image
+
+        # Build the PDF document
+        doc.build(story)

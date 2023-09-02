@@ -20,9 +20,10 @@ samfile = pysam.AlignmentFile(os.path.join(config["bam_file"]), "rb")
 
 ge = GenomeExplorer(config)
 
-# (total_read_count, total_length, chromosome_read_counts,
-#  gc_percentage) = ge.get_statistics(samfile)
+statistics = ge.get_statistics(samfile)
 
 coverage_dict = ge.get_average_coverage(samfile)
+
+ge.generate_pdf_report(statistics, coverage_dict)
 logger.info("Closing bam file")
 samfile.close()

@@ -1,7 +1,8 @@
 
 project_name: "gene-planet-homework"
-bam_file: "data/smaller_bam_sample.bam"
-#  bam_file: "79734fd3-87c2-4a79-a25d-4c4465c432e2_alignment-bam.bam"
+#bam_file: "data/smaller_bam_sample.bam"
+bam_file: "data/79734fd3-87c2-4a79-a25d-4c4465c432e2_alignment-bam.bam"
+report_path: "reports/genome_report.pdf"
 coverage:
   base_order: ["A", "C", "G", "T"]
 
