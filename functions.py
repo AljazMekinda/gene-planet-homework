@@ -97,6 +97,12 @@ class GenomeExplorer:
         return contig, average_coverage
 
     def get_average_coverage(self, samfile):
+        """
+        Calculate the average coverage for each chromosome
+        Coverage is calculated as the number of reads covering a given base
+        :param samfile:
+        :return:
+        """
         self.logger.info("Calculating average coverage for each chromosome")
         chromosomes = []
         av_coverage_values = []
@@ -138,6 +144,13 @@ class GenomeExplorer:
     #     return coverage_dict
 
     def generate_pdf_report(self, statistics, coverage_dict):
+        """
+        Generate a PDF report with statistics and a graph showing the average
+        coverage across the genome for selected chromosomes
+        :param statistics:
+        :param coverage_dict:
+        :return:
+        """
         # Create a PDF document
         self.logger.info("Generating PDF report")
         create_if_not_exists("reports")
