@@ -24,6 +24,12 @@ docker run -v /path/to/data:/data -v /path/to/reports:/reports -v /path/to/runne
 
 ```
 
+## How to Run the Project
+
+```bash 
+python runner.py --config config_name.yaml
+```
+
 Make sure to replace **/path/to/data** and **/path/to/reports** with the local directory containing your BAM files and **/path/to/runner_config** with the directory containing your configuration file.
 
 ## Config file
