@@ -13,14 +13,19 @@ git clone https://github.com/AljazMekinda/gene-planet-homework.git
 
 2. Navigate to the project directory:
 
-3. Build the Docker image using the provided Dockerfile: docker build -t gene-planet:0.3 .
+3. Build the Docker image using the provided Dockerfile: 
 
+```bash 
+docker build -t gene-planet:0.3 .
+
+```
 ## How to Run and Mount Volumes
 
 Once you have built the Docker image, you can run the project and mount volumes to provide input data and retrieve output reports. To run the project with volume mounting:
 
 ```bash
-docker run -v /path/to/data:/data -v /path/to/reports:/reports -v /path/to/runner_config:/config/runner_config gene-planet:0.3  /bin/bash
+docker run -v /path/to/data:/data -v /path/to/reports:/reports -v /path/to/runner_config:/config/runner_config -it --entrypoint=/bin/bash gene-planet:0.3
+
 
 ```
 
