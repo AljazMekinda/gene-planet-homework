@@ -13,4 +13,4 @@ COPY requirements.txt .
 # Install the app dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["python", "runner.py"]
+#ENTRYPOINT ["python", "runner.py"]

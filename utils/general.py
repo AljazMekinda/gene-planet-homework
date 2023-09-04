@@ -38,11 +38,11 @@ def setup_logging(logging_config_path, filename_prefix=None, logger_name=None,
     :param logger_name:
     :return:
     """
-    create_if_not_exist("logs")
-    create_if_not_exist(os.path.join("logs", filename_prefix))
+    create_if_not_exists("logs")
+    create_if_not_exists(os.path.join("logs", filename_prefix))
     if logs_timestamp is None:
         logs_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    create_if_not_exist(os.path.join("logs", filename_prefix, logs_timestamp))
+    create_if_not_exists(os.path.join("logs", filename_prefix, logs_timestamp))
 
     logging_config = load_config(logging_config_path)
 
@@ -70,7 +70,7 @@ def get_saving_log(logger):
     return log_contents
 
 
-def create_if_not_exist(dir):
+def create_if_not_exists(dir):
     """
     Creates the folder on the local disk if it does not exist.
 

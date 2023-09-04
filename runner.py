@@ -1,5 +1,6 @@
 # Runner for GENE PLANET HOMEWORK
 import os
+import argparse
 import pysam
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,7 +8,16 @@ import numpy as np
 from functions import GenomeExplorer
 from utils.general import setup_logging, load_config
 
-config = load_config(os.path.join('config', "config.yaml"))
+parser = argparse.ArgumentParser(
+    description="Runenr for Gene-Planet Assignment project")
+
+parser.add_argument("--config", help="Choose main config file", type=str,
+                    default="config.yaml")
+args = parser.parse_args()
+
+
+
+config = load_config(os.path.join('config', "runner_config", "config.yaml"))
 
 project_name = config['project_name']
 

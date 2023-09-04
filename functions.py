@@ -1,5 +1,4 @@
 import logging
-import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pysam
@@ -10,6 +9,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, \
     Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+
+from utils.general import create_if_not_exists
 
 
 class GenomeExplorer:
@@ -139,6 +140,7 @@ class GenomeExplorer:
     def generate_pdf_report(self, statistics, coverage_dict):
         # Create a PDF document
         self.logger.info("Generating PDF report")
+        create_if_not_exists("reports")
         # Create a PDF document
         doc = SimpleDocTemplate(self.report_path, pagesize=landscape(letter))
 

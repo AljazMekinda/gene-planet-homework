@@ -1,8 +1,8 @@
 pysam
 pyyaml
-scipy
-seaborn
+# scipy
+# seaborn
 numpy
 matplotlib
 reportlab
-pyspark
+# pyspark
